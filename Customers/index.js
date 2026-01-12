@@ -49,7 +49,7 @@ app.delete("/customers/:id", (req, res) => {
   }
 });
 
-app.post("/customers", (req, res) => {
+app.post("/addcustomer", (req, res) => {
   let custData = req.body; 
   let validator = require("validator");
   if (!custData.name || custData.name.trim().length <= 3) {
@@ -72,7 +72,7 @@ app.post("/customers", (req, res) => {
   }
 
   const age = custData.age;
-  if (age === undefined || !Number.isInteger(age) || age << 18 || age > 100) {
+  if (age === undefined || !Number.isInteger(age) || age < 18 || age > 100) {
     return res.status(400).json({
       message: "Age must be between 18 and 100",
     });
@@ -102,6 +102,19 @@ app.post("/customers", (req, res) => {
     });
   }
 
+  const gstNumber = custData.gstnum;
+  
+    if (
+    gstNumber &&
+    !validator.matches(
+      gstNumber,
+      /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+    )
+  ) {
+    return res.status(400).json({
+      message: "Invalid GST number format"
+    });
+  }
 
   custData.id = customers.length + 1; 
   customers.push(custData); 
@@ -133,5 +146,4 @@ app.put("/customers/:id", (req, res) => {
     Customer: CustomerObj,
   });
 });
-
 

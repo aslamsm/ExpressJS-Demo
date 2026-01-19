@@ -1,3 +1,5 @@
+Assignment :   MongoDB shell command......
+
 
 show db
 use crm

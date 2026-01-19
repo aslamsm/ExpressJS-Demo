@@ -1,1 +1,82 @@
 
+show db
+use crm
+db
+
+use crm
+show collections
+
+use crm
+db.customers.insertOne({
+  name: "John Doe",
+  email: "john.doe@example.com",
+phone: "9876543210,
+  crdlimit: 50000
+})
+
+db.customers.insertMany([
+  {
+    name: "Aslam",
+    email: "aslamsm@example.com",
+    phone: "9876543500",
+    crdlimit: 50000
+  },
+  {
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    phone: "9876543211",
+    crdlimit: 60000
+  },
+  {
+    name: "Robert Brown",
+    email: "robert.brown@example.com",
+    phone: "9876543212",
+    crdlimit: 45000
+  },
+  {
+    name: "Emily Davis",
+    email: "emily.davis@example.com",
+    phone: "9876543213",
+    crdlimit: 70000
+  },
+  {
+    name: "Michael Wilson",
+    email: "michael.wilson@example.com",
+    phone: "9876543214",
+    crdlimit: 55000
+  }
+])
+
+db.customers.find()
+
+db.customers.find({ crdlimit: { $gte: 70000 } })
+
+db.customers.find({},{ name: 1, email: 1, _id: 0 })
+
+db.customers.find({ name: "Rahul Sharma" })
+
+db.customers.find({
+  crdlimit: { $gte: 50000, $lte: 100000 }
+})
+
+db.customers.find().sort({ crdlimit: -1 })
+
+db.customers.find().sort({ crdlimit: -1 }).limit(3)
+
+db.customers.find().limit(2)
+
+db.customers.find({},{ name: 1, crdlimit: 1}).sort({ crdlimit: -1 }).limit(5)
+
+db.customers.find({crdlimit: { $gte: 60000 }).sort({ crdlimit: -1 }).limit(3)
+
+
+
+use crm does not create a database immediately.
+The database crm will only be created after we insert data into a collection
+
+show dbs only shows non-empty databases
+
+find() returns multiple docs, findOne() returns one doc.
+
+sort() before limit() for order-wise output.
+

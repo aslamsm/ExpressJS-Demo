@@ -1,48 +1,78 @@
-// Load environment variables from a .env file (e.g. MONGO_URL, PORT)
-require("dotenv").config();
-
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+
+const router = express.Router();
+
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    res.status(400).json({ message: "Registration failed" });
+  }
+});
+
 const rateLimit = require("express-rate-limit");
-const helmet = require("helmet");
 
-const app = express();
+// only 3 attempts per hour
+// const loginLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000,
+//   max: 3,
+// });
 
-// Parse incoming JSON requests and limit payload size to mitigate large body attacks
-app.use(express.json({ limit: "10kb" }));
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"],
-  }),
-);
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid user credentials" });
+    }
 
-// Basic rate limiter to prevent brute-force or excessive requests
-// Here we limit to 3 requests per minute per IP (tweak for your needs)
-const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 50, // limit each IP to 3 requests per `windowMs`
+    const isMatch = await bcrypt.compare(req.body.password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid pass credentials",
+        enteredPassword: password,
+        storedHashedPassword: user.password,
+      });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.json({
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Login failed" });
+  }
 });
-app.use(limiter);
 
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Failed to connect to MongoDB", err);
+const authMiddleware = require("../middlewares/authMiddleware");
+
+router.get("/profile", authMiddleware, (req, res) => {
+  res.json({
+    message: "Protected route accessed",
+    user: req.user,
   });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
 
-const itemRoutes = require("./routes/items.routes");
-app.use("/items", itemRoutes);
-
-const authRoutes = require("./routes/auth.routes");
-app.use("/auth", authRoutes);
-
+module.exports = router;

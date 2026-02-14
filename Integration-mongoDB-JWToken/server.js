@@ -45,4 +45,3 @@ app.use("/items", itemRoutes);
 
 const authRoutes = require("./routes/auth.routes");
 app.use("/auth", authRoutes);
-
